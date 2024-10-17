@@ -31,6 +31,7 @@ public class UserService implements UserServiceInterface{
     @Override
     public ReqRes createNewUser(ReqRes userDetails){
         ReqRes response =new ReqRes();
+
         try {
             User user =new User();
             var existingUser =repository.findAll().stream()
