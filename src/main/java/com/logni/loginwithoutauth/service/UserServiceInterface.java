@@ -2,11 +2,10 @@ package com.logni.loginwithoutauth.service;
 
 import com.logni.loginwithoutauth.dto.ReqRes;
 
-import java.util.List;
-
 public interface UserServiceInterface {
     ReqRes getAllUsers();
-    ReqRes createNewUser(ReqRes userDetails);
-    ReqRes updateUser(ReqRes userDetails);
-    ReqRes login(ReqRes userDetails);
+    ReqRes createNewUser(ReqRes UserDetails);
+    ReqRes updateUser(ReqRes UserDetails);
+    ReqRes login(ReqRes UserDetails);
+    ReqRes logout(ReqRes UserDetails);
 }

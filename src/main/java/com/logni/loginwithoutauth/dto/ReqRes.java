@@ -14,7 +14,7 @@ public class ReqRes {
     private int statusCode;
     private String message;
     private String error;
-    private String username;
+    private String userName;
     private String userEmail;
     private String password;
     private List<User> users;

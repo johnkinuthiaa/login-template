@@ -3,9 +3,11 @@ package com.logni.loginwithoutauth.service;
 import com.logni.loginwithoutauth.dto.ReqRes;
 import com.logni.loginwithoutauth.model.User;
 import com.logni.loginwithoutauth.repository.UserRepository;
+import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 public class UserService implements UserServiceInterface{
@@ -13,6 +15,7 @@ public class UserService implements UserServiceInterface{
     public UserService(UserRepository repository){
         this.repository=repository;
     }
+
     @Override
     public ReqRes getAllUsers(){
         ReqRes response =new ReqRes();
@@ -29,23 +32,21 @@ public class UserService implements UserServiceInterface{
 
     }
     @Override
-    public ReqRes createNewUser(ReqRes userDetails){
+    public ReqRes createNewUser(ReqRes UserDetails){
         ReqRes response =new ReqRes();
-
         try {
-            User user =new User();
-            var existingUser =repository.findAll().stream()
-                    .filter(user1 -> user.getUserEmail().toLowerCase().contains(userDetails.getUserEmail()))
-                    .findAny().orElse(null);
+            User user1 =new User();
+            User existingUser =repository.findUserByUserEmail(UserDetails.getUserEmail());
             if (existingUser ==null){
-                user.setUserName(userDetails.getUsername());
-                user.setPassword(userDetails.getPassword());
-                user.setPassword(userDetails.getPassword());
-                user.setIsLoggedIn(false);
-                repository.save(user);
+                user1.setUserName(UserDetails.getUserName());
+                user1.setUserEmail(UserDetails.getUserEmail());
+                user1.setPassword(UserDetails.getPassword());
+
+                user1.setIsLoggedIn(false);
+                repository.save(user1);
                 response.setMessage("new user created");
                 response.setStatusCode(200);
-                response.setUser(user);
+                response.setUser(user1);
             }else{
                 response.setStatusCode(400);
                 response.setMessage("user already exists");
@@ -58,21 +59,21 @@ public class UserService implements UserServiceInterface{
         return response;
     }
     @Override
-    public ReqRes updateUser(ReqRes userDetails){
+    public ReqRes updateUser(ReqRes UserDetails){
         ReqRes response =new ReqRes();
         try {
-            User user =new User();
             var existingUser =repository.findAll().stream()
-                    .filter(user1 -> user.getUserEmail().toLowerCase().contains(userDetails.getUserEmail()))
+                    .filter(user -> user.getUserEmail().toLowerCase().contains(UserDetails.getUserEmail()))
                     .findAny().orElse(null);
             if (existingUser !=null) {
-                user.setUserName(userDetails.getUsername());
-                user.setPassword(userDetails.getPassword());
-                user.setPassword(userDetails.getPassword());
-                repository.save(user);
+                existingUser.setUserName(UserDetails.getUserName());
+                existingUser.setUserEmail(UserDetails.getUserEmail());
+                existingUser.setPassword(UserDetails.getPassword());
+
+                repository.save(existingUser);
                 response.setMessage("new user created");
                 response.setStatusCode(200);
-                response.setUser(user);
+                response.setUser(existingUser);
             }
         } catch (Exception e) {
             response.setStatusCode(404);
@@ -83,27 +84,34 @@ public class UserService implements UserServiceInterface{
 
     }
     @Override
-    public ReqRes login(ReqRes userDetails){
+    public ReqRes login(ReqRes UserDetails){
         ReqRes response =new ReqRes();
-        try {
-            var findUserEmail = repository.findAll().stream()
-                    .filter(user -> user.getUserEmail().toLowerCase().contains(userDetails.getUserEmail()))
-                    .findAny().orElse(null);
-            var findUserPassword = repository.findAll().stream()
-                    .filter(user -> user.getPassword().toLowerCase().contains(userDetails.getPassword()))
-                    .findAny().orElse(null);
-            if(findUserEmail !=null && findUserPassword ==null){
-                findUserEmail.setIsLoggedIn(true);
-                response.setMessage("new successfully logged in");
-                response.setStatusCode(200);
+        User user = repository.findUserByUserEmail(UserDetails.getUserEmail());
 
+        if (user !=null &&UserDetails.getPassword().equals(user.getPassword())) {
+            if(user.isLoggedIn){
+                throw new RuntimeException("user was already logged in");
             }
+            response.setStatusCode(200);
+            response.setMessage("logged in successfully");
+            user.setIsLoggedIn(true);
+            response.setUser(user );
 
-        } catch (Exception e) {
-            response.setStatusCode(404);
-            response.setMessage("could not log you in");
+        }else{
+            response.setStatusCode(500);
+            response.setMessage("user not logged in successfully ");
         }
         return response;
-
+    }
+    @Override
+    public ReqRes logout(ReqRes UserDetails){
+        ReqRes response =new ReqRes();
+        User user = repository.findUserByUserEmail(UserDetails.getUserEmail());
+        if(user !=null && user.isLoggedIn){
+            user.setIsLoggedIn(false);
+            response.setMessage("user logged out successfully");
+            response.setStatusCode(200);
+        }
+        return response;
     }
 }
